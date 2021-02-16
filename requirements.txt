@@ -25,4 +25,5 @@ wmi
 QScintilla==2.11.4
 plotly
 quickfix
+shioaji
 trading-calendars

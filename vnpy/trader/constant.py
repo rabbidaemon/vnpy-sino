@@ -120,6 +120,8 @@ class Exchange(Enum):
     TOCOM = "TOCOM"         # Tokyo Commodity Exchange
     EUNX = "EUNX"           # Euronext Exchange
     KRX = "KRX"             # Korean Exchange
+    TSE = "TSE"             # Taiwan Stock Exchange
+    TFE = "TFE"             # Taiwan Futures Exchange
     OTC = "OTC"             # OTC Forex Broker
     IBKRATS = "IBKRATS"     # Paper Trading Exchange of IB
 

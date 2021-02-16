@@ -46,6 +46,7 @@ from vnpy.gateway.ctp import CtpGateway
 # from vnpy.gateway.rohon import RohonGateway
 # from vnpy.gateway.xgj import XgjGateway
 # from vnpy.gateway.alpaca import AlpacaGateway
+from vnpy.gateway.sinopac import SinopacGateway
 
 # from vnpy.app.cta_strategy import CtaStrategyApp
 # from vnpy.app.cta_backtester import CtaBacktesterApp
@@ -108,6 +109,9 @@ def main():
     # main_engine.add_gateway(BybitGateway)
     # main_engine.add_gateway(GateiosGateway)
     # main_engine.add_gateway(DeribitGateway)
+    # main_engine.add_gateway(OkexoGateway)
+    # main_engine.add_gateway(BinancefGateway)
+    main_engine.add_gateway(SinopacGateway)
     # main_engine.add_gateway(BitfinexGateway)
     # main_engine.add_gateway(CoinbaseGateway)
     # main_engine.add_gateway(BitstampGateway)
