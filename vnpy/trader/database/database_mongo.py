@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional, Sequence, List
 from tzlocal import get_localzone
 
-from mongoengine import DateTimeField, Document, FloatField, StringField, connect
+from mongoengine import DateTimeField, Document, FloatField, StringField, connect, switch_collection
 
 from vnpy.trader.constant import Exchange, Interval
 from vnpy.trader.object import BarData, TickData
@@ -204,26 +204,46 @@ class MongoManager(BaseDatabaseManager):
         interval: Interval,
         start: datetime,
         end: datetime,
+        collection_name: str = None,
     ) -> Sequence[BarData]:
-        s = DbBarData.objects(
-            symbol=symbol,
-            exchange=exchange.value,
-            interval=interval.value,
-            datetime__gte=convert_tz(start),
-            datetime__lte=convert_tz(end),
-        )
+        if collection_name is None:
+            s = DbBarData.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                interval=interval.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
+        else:
+            with switch_collection(DbBarData, collection_name):
+                s = DbBarData.objects(
+                    symbol=symbol,
+                    exchange=exchange.value,
+                    interval=interval.value,
+                    datetime__gte=start,
+                    datetime__lte=end,
+                )
         data = [db_bar.to_bar() for db_bar in s]
         return data
 
     def load_tick_data(
-        self, symbol: str, exchange: Exchange, start: datetime, end: datetime
+        self, symbol: str, exchange: Exchange, start: datetime, end: datetime, collection_name: str = None,
     ) -> Sequence[TickData]:
-        s = DbTickData.objects(
-            symbol=symbol,
-            exchange=exchange.value,
-            datetime__gte=convert_tz(start),
-            datetime__lte=convert_tz(end),
-        )
+        if collection_name is None:
+            s = DbTickData.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
+        else:
+            with switch_collection(DbTickData, collection_name):
+                s = DbTickData.objects(
+                    symbol=symbol,
+                    exchange=exchange.value,
+                    datetime__gte=start,
+                    datetime__lte=end,
+                )
         data = [db_tick.to_tick() for db_tick in s]
         return data
 

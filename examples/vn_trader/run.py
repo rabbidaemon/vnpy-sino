@@ -4,7 +4,7 @@ from vnpy.event import EventEngine
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import MainWindow, create_qapp
 
-from vnpy.gateway.ctp import CtpGateway
+#from vnpy.gateway.ctp import CtpGateway
 # from vnpy.gateway.ctptest import CtptestGateway
 # from vnpy.gateway.mini import MiniGateway
 # from vnpy.gateway.minitest import MinitestGateway
@@ -25,7 +25,7 @@ from vnpy.gateway.ctp import CtpGateway
 # from vnpy.gateway.tap import TapGateway
 # from vnpy.gateway.da import DaGateway
 # from vnpy.gateway.mt5 import Mt5Gateway
-# from vnpy.gateway.binance import BinanceGateway
+from vnpy.gateway.binance import BinanceGateway
 # from vnpy.gateway.binances import BinancesGateway
 # from vnpy.gateway.huobi import HuobiGateway
 # from vnpy.gateway.huobif import HuobifGateway
@@ -58,12 +58,12 @@ from vnpy.app.script_trader import ScriptTraderApp
 from vnpy.app.market_radar import MarketRadarApp
 from vnpy.app.chart_wizard import ChartWizardApp
 from vnpy.app.rpc_service import RpcServiceApp
-from vnpy.app.excel_rtd import ExcelRtdApp
+#from vnpy.app.excel_rtd import ExcelRtdApp
 from vnpy.app.data_manager import DataManagerApp
 from vnpy.app.data_recorder import DataRecorderApp
 from vnpy.app.risk_manager import RiskManagerApp
 from vnpy.app.portfolio_manager import PortfolioManagerApp
-from vnpy.app.paper_account import PaperAccountApp
+#from vnpy.app.paper_account import PaperAccountApp
 
 
 def main():
@@ -74,7 +74,7 @@ def main():
 
     main_engine = MainEngine(event_engine)
 
-    main_engine.add_gateway(CtpGateway)
+    #main_engine.add_gateway(CtpGateway)
     # main_engine.add_gateway(CtptestGateway)
     # main_engine.add_gateway(MiniGateway)
     # main_engine.add_gateway(MinitestGateway)
@@ -95,7 +95,7 @@ def main():
     # main_engine.add_gateway(TapGateway)
     # main_engine.add_gateway(DaGateway)
     # main_engine.add_gateway(Mt5Gateway)
-    # main_engine.add_gateway(BinanceGateway)
+    main_engine.add_gateway(BinanceGateway)
     # main_engine.add_gateway(BinancesGateway)    
     # main_engine.add_gateway(HuobiGateway)
     # main_engine.add_gateway(HuobifGateway)
@@ -130,12 +130,12 @@ def main():
     main_engine.add_app(MarketRadarApp)
     main_engine.add_app(ChartWizardApp)
     main_engine.add_app(RpcServiceApp)
-    main_engine.add_app(ExcelRtdApp)
+    #main_engine.add_app(ExcelRtdApp)
     main_engine.add_app(DataManagerApp)
     main_engine.add_app(DataRecorderApp)
     main_engine.add_app(RiskManagerApp)
     main_engine.add_app(PortfolioManagerApp)
-    main_engine.add_app(PaperAccountApp)
+    #main_engine.add_app(PaperAccountApp)
 
 
     

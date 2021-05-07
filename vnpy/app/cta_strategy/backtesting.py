@@ -183,7 +183,8 @@ class BacktestingEngine:
         end: datetime = None,
         mode: BacktestingMode = BacktestingMode.BAR,
         inverse: bool = False,
-        risk_free: float = 0
+        risk_free: float = 0,
+        collection_name: str = None
     ):
         """"""
         self.mode = mode
@@ -203,6 +204,7 @@ class BacktestingEngine:
         self.mode = mode
         self.inverse = inverse
         self.risk_free = risk_free
+        self.collection_name = collection_name
 
     def add_strategy(self, strategy_class: type, setting: dict):
         """"""
@@ -246,14 +248,16 @@ class BacktestingEngine:
                     self.exchange,
                     self.interval,
                     start,
-                    end
+                    end,
+                    self.collection_name
                 )
             else:
                 data = load_tick_data(
                     self.symbol,
                     self.exchange,
                     start,
-                    end
+                    end,
+                    self.collection_name
                 )
 
             self.history_data.extend(data)
@@ -640,6 +644,9 @@ class BacktestingEngine:
 
     def run_ga_optimization(self, optimization_setting: OptimizationSetting, population_size=100, ngen_size=30, output=True):
         """"""
+        global ga_collection_name
+
+        ga_collection_name = self.collection_name
         # Get optimization setting and target
         settings = optimization_setting.generate_setting_ga()
         target_name = optimization_setting.target_name
@@ -1249,7 +1256,8 @@ def optimize(
     capital: int,
     end: datetime,
     mode: BacktestingMode,
-    inverse: bool
+    inverse: bool,
+    collection_name: str=None
 ):
     """
     Function for running in multiprocessing.pool
@@ -1267,7 +1275,8 @@ def optimize(
         capital=capital,
         end=end,
         mode=mode,
-        inverse=inverse
+        inverse=inverse,
+        collection_name=collection_name
     )
 
     engine.add_strategy(strategy_class, setting)
@@ -1299,7 +1308,8 @@ def _ga_optimize(parameter_values: tuple):
         ga_capital,
         ga_end,
         ga_mode,
-        ga_inverse
+        ga_inverse,
+        ga_collection_name
     )
     return (result[1],)
 
@@ -1315,11 +1325,12 @@ def load_bar_data(
     exchange: Exchange,
     interval: Interval,
     start: datetime,
-    end: datetime
+    end: datetime,
+    collection_name: str=None
 ):
     """"""
     return database_manager.load_bar_data(
-        symbol, exchange, interval, start, end
+        symbol, exchange, interval, start, end, collection_name
     )
 
 
@@ -1328,11 +1339,12 @@ def load_tick_data(
     symbol: str,
     exchange: Exchange,
     start: datetime,
-    end: datetime
+    end: datetime,
+    collection_name: str=None
 ):
     """"""
     return database_manager.load_tick_data(
-        symbol, exchange, start, end
+        symbol, exchange, start, end, collection_name
     )
 
 

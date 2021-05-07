@@ -31,7 +31,8 @@ class BaseDatabaseManager(ABC):
         exchange: "Exchange",
         interval: "Interval",
         start: datetime,
-        end: datetime
+        end: datetime,
+        collection_name: str = None
     ) -> Sequence["BarData"]:
         pass
 
@@ -41,7 +42,8 @@ class BaseDatabaseManager(ABC):
         symbol: str,
         exchange: "Exchange",
         start: datetime,
-        end: datetime
+        end: datetime,
+        collection_name: str = None
     ) -> Sequence["TickData"]:
         pass
 

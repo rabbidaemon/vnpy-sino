@@ -4,6 +4,7 @@ Author: ypochien@gmail.com
 """
 import os
 import sys
+from typing import List, Optional
 from collections import OrderedDict
 from copy import copy
 from datetime import datetime
@@ -15,6 +16,10 @@ from shioaji import constant
 from shioaji.account import StockAccount, FutureAccount
 from shioaji.order import Status as SinopacStatus
 
+import pandas as pd
+
+from pytz import timezone
+CHINA_TZ = timezone("Asia/Shanghai")
 
 from vnpy.trader.constant import (
     Direction,
@@ -28,10 +33,12 @@ from vnpy.trader.event import EVENT_TIMER
 from vnpy.trader.gateway import BaseGateway
 from vnpy.trader.object import (
     TickData,
+    BarData,
     OrderData,
     TradeData,
     ContractData,
     PositionData,
+    HistoryRequest,
     SubscribeRequest,
     OrderRequest,
     CancelRequest,
@@ -303,6 +310,7 @@ class SinopacGateway(BaseGateway):
                         pricetick=pricetick,
                         min_volume=1,
                         gateway_name=self.gateway_name,
+                        history_data=True,
                     )
                     self.on_contract(data)
                     symbol = f"{contract.code}.{Exchange.TSE.value}"
@@ -475,6 +483,188 @@ class SinopacGateway(BaseGateway):
                 gateway_name=self.gateway_name,
             )
             self.on_position(pos)
+
+    def query_history(self, req: HistoryRequest) -> Optional[List[BarData]]:
+        """
+        Query history bar data from Sinopac.
+        """
+
+        symbol = req.symbol
+        exchange = req.exchange
+        interval = req.interval
+        start = req.start
+        end = req.end
+
+        print(symbol, exchange, interval, start, end, req)
+        contract = self.code2contract.get(f"{symbol}.{exchange.value}", None)
+        if contract is None:
+            return None
+        #rq_symbol = self.to_rq_symbol(symbol, exchange)
+        #if rq_symbol not in self.symbols:
+        #    return None
+
+       # rq_interval = INTERVAL_VT2RQ.get(interval)
+       # if not rq_interval:
+       #     return None
+
+       # # For adjust timestamp from bar close point (RQData) to open point (VN Trader)
+       # adjustment = INTERVAL_ADJUSTMENT_MAP[interval]
+
+       # # For querying night trading period data
+       # end += timedelta(1)
+
+       # # Only query open interest for futures contract
+       # fields = ["open", "high", "low", "close", "volume"]
+       # if not symbol.isdigit():
+       #     fields.append("open_interest")
+
+        #df = rqdata_get_price(
+        #    rq_symbol,
+        #    frequency=rq_interval,
+        #    fields=fields,
+        #    start_date=start,
+        #    end_date=end,
+        #    adjust_type="none"
+        #)
+        print(contract, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+        self.kbar = self.api.kbars(contract,start=start.strftime("%Y-%m-%d")
+            ,end=end.strftime("%Y-%m-%d"))
+        df = pd.DataFrame({**self.kbar})
+
+        #print(df)
+        data: List[BarData] = []
+
+        if df is not None:
+            for ix, row in df.iterrows():
+                dt = pd.to_datetime(row.ts) #row.name.to_pydatetime() - adjustment
+                #dt = CHINA_TZ.localize(dt)
+                #dt = row.ts
+
+                bar = BarData(
+                    symbol=symbol,
+                    exchange=exchange,
+                    interval=interval,
+                    datetime=dt,
+                    open_price=row["Open"],
+                    high_price=row["High"],
+                    low_price=row["Low"],
+                    close_price=row["Close"],
+                    volume=row["Volume"],
+                    #open_interest=row.get("open_interest", 0),
+                    gateway_name="Sinopac"
+                )
+
+                data.append(bar)
+
+        #print(data)
+        return data
+    def query_tick_history(self, req: HistoryRequest) -> Optional[List[TickData]]:
+        """
+        Query history bar data from Sinopac.
+        """
+        if self.symbols is None:
+            return None
+
+        symbol = req.symbol
+        exchange = req.exchange
+        start = req.start
+        end = req.end
+
+        contract = self.code2contract.get(f"{symbol}.{exchange.value}", None)
+        if contract is None:
+            return None
+
+        ## For querying night trading period data
+        #end += timedelta(1)
+
+        ## Only query open interest for futures contract
+        #fields = [
+        #    "open",
+        #    "high",
+        #    "low",
+        #    "last",
+        #    "prev_close",
+        #    "volume",
+        #    "limit_up",
+        #    "limit_down",
+        #    "b1",
+        #    "b2",
+        #    "b3",
+        #    "b4",
+        #    "b5",
+        #    "a1",
+        #    "a2",
+        #    "a3",
+        #    "a4",
+        #    "a5",
+        #    "b1_v",
+        #    "b2_v",
+        #    "b3_v",
+        #    "b4_v",
+        #    "b5_v",
+        #    "a1_v",
+        #    "a2_v",
+        #    "a3_v",
+        #    "a4_v",
+        #    "a5_v",
+        #]
+        #if not symbol.isdigit():
+        #    fields.append("open_interest")
+
+        self.tick = self.api.ticks(contract,start=start.strftime("%Y-%m-%d")
+            ,end=end.strftime("%Y-%m-%d"))
+        self.tick.bid_price.pop()
+        self.tick.ask_price.pop()
+        self.tick.bid_price.insert(0,self.tick.close[0])
+        self.tick.ask_price.insert(0,self.tick.close[0])
+        df = pd.DataFrame({**self.tick})
+
+        data: List[TickData] = []
+
+        if df is not None:
+            for ix, row in df.iterrows():
+                dt = pd.to_datetime(row.ts) #row.name.to_pydatetime() - adjustment
+                dt = CHINA_TZ.localize(dt)
+
+                tick = TickData(
+                    symbol=symbol,
+                    exchange=exchange,
+                    datetime=dt,
+                    open_price=row["open"],
+                    high_price=row["high"],
+                    low_price=row["low"],
+                    pre_close=row["prev_close"],
+                    last_price=row["last"],
+                    volume=row["volume"],
+                    open_interest=row.get("open_interest", 0),
+                    limit_up=row["limit_up"],
+                    limit_down=row["limit_down"],
+                    bid_price_1=row["b1"],
+                    #bid_price_2=row["b2"],
+                    #bid_price_3=row["b3"],
+                    #bid_price_4=row["b4"],
+                    #bid_price_5=row["b5"],
+                    ask_price_1=row["a1"],
+                    #ask_price_2=row["a2"],
+                    #ask_price_3=row["a3"],
+                    #ask_price_4=row["a4"],
+                    #ask_price_5=row["a5"],
+                    bid_volume_1=row["b1_v"],
+                    #bid_volume_2=row["b2_v"],
+                    #bid_volume_3=row["b3_v"],
+                    #bid_volume_4=row["b4_v"],
+                    #bid_volume_5=row["b5_v"],
+                    ask_volume_1=row["a1_v"],
+                    #ask_volume_2=row["a2_v"],
+                    #ask_volume_3=row["a3_v"],
+                    #ask_volume_4=row["a4_v"],
+                    #ask_volume_5=row["a5_v"],
+                    gateway_name="RQ"
+                )
+
+                data.append(tick)
+
+        return data
 
     def close(self):
         """"""
